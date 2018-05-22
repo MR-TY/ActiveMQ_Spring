@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jms="http://www.springframework.org/schema/jms"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans  
+      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd  
+      http://www.springframework.org/schema/context  
+      http://www.springframework.org/schema/context/spring-context-3.0.xsd  
+      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd  
+      http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.0.xsd">
+
+	<!--配置的是通信的模板 这个实际上就是我们的生产者 -->
+	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory" ref="connectionFactory"></property>
+      <!--   <property name="defaultDestination" ref="queueDestination"></property> -->
+	</bean>
+
+	<!--配置我们的连接工厂 下面的这个配置的是Spring中提供的这个连接工厂 -->
+	<bean id="connectionFactory"
+		class="org.springframework.jms.connection.SingleConnectionFactory">
+		<property name="targetConnectionFactory" ref="targetConnectionFactory"></property>
+	</bean>
+
+	<!--配置实际的这个生产连接的工厂 -->
+	<bean id="targetConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+		<!--配置的是连接的url -->
+		<property name="brokerURL" value="tcp://120.79.167.160:61616"></property>
+	</bean>
+
+	<!--配置的队列的那个目的地 new ActiveMQQueue("") -->
+	<bean id="queueDestination" class="org.apache.activemq.command.ActiveMQQueue">
+		<!--通过构造器给当前的队列取名字 -->
+		<constructor-arg name="name" value="springQueue"></constructor-arg>
+	</bean>
+	
+	<!--配置一个主题模式下的地址-->
+	<bean id="topicDestination" class="org.apache.activemq.command.ActiveMQTopic">
+	   <!--通过构造器给当前的队列取名字 -->
+		<constructor-arg name="name" value="springTopic"></constructor-arg>
+	</bean>
+	
+	<!--下面你还可以配置个Listener-->
+	<bean id="messageListener" class="com.ty.listener.ConsumerListener"></bean>
+	
+	<!--申明的是Spring中的这个监听器-->
+	<bean class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+	   <!--注入实际的这个监听器-->
+	   <property name="messageListener" ref="messageListener"></property>
+	   <!--注入实际的目的地-->
+	   <property name="destination" ref="topicDestination"></property>
+	   <!--注入的是这个连接的工厂-->
+	   <property name="connectionFactory" ref="connectionFactory"></property>
+	</bean>
+	
+	<!--配置的是Spring的扫描包-->
+	<context:component-scan base-package="com.ty"></context:component-scan>
+</beans>      
+       
